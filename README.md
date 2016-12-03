@@ -7,8 +7,8 @@ A convenience Ruby script to run junit tests
 Alternatively a Ruby CLI tool which wraps the above has been written and checked in to make a lot of this easier. To use it:
 * Go to the hybris/bin/platform directory
 * Soft link to: `junit.rb@ -> ../../../tools/junit-cli/junit.rb`
-* Copy the YML configurations to hybris/bin/platform, so that you can modify as you need: `cp ../../../tools/junit-cli/junit_cfg.yml.template junit_cfg.yml`
-*To use the tool, `hybris/bin/platform/junit.rb --help`
+* Copy the YML configurations to hybris/bin/platform, so that you can modify as you need. E.g. `cp ../../../tools/junit-cli/junit_cfg.yml.template junit_cfg.yml`
+* To use the tool, `hybris/bin/platform/junit.rb --help`
 ```
 Usage: junit [options]
 Hybris JUNIT CLI Runner v1.0.0
@@ -35,13 +35,14 @@ Specific options:
         --version                    Show version information about this program and quit.
 ```
 So if your `junit_cfg.yml` has:
+
 ```
 all_extensions:
 - mycustomcore
 - mycustomfacades
 - mycustomwebservices
 - mycustominitialdata
-- mycustomfulfilmentprocess=
+- mycustomfulfilmentprocess
 - mycustomcockpit
 - mycustombackoffice
 - mycustomstorefront
@@ -50,5 +51,13 @@ webExtensions:
 - mycustomstorefront
 all_packages:
 - com.custom.core.MyCustomServiceImplTest
-=```
-You can run unit tests on just MyCustomServiceImplTest, by invoking `junit.rb -p 0`
+- com.custom.core.MyCustomDaoImplTest
+- com.custom.core.MyCustomFacadeImplTest
+```
+
+Thus
+* You can run unit tests on just MyCustomServiceImplTest and MyCustomFacadeImplTest, by invoking `hybris/bin/platform/junit.rb -p 0,2`.
+* You can run unit tests on just mycustomcore by invoking `hybris/bin/platform/junit.rb -u 0`
+* Unfortunately, tests stored in `web/testsrc` directories need to be run separately than the ones stored in `testsrc` directory. Hence to run unit tests on just mycustomwebservices and  mycustomstorefront, invoke `hybris/bin/platform/junit.rb -w 0,1`
+
+
