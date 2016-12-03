@@ -2,13 +2,14 @@
 
 A convenience Ruby script to run junit tests 
 
-### Running unit tests with a Ruby CLI tool
+### Running unit tests with a Ruby CLI sript
 
-Alternatively a Ruby CLI tool which wraps the above has been written and checked in to make a lot of this easier. To use it:
+This is a Ruby CLI script to make running unit tests for Hybris projects easier. To set it up for yourself:
 * Go to the hybris/bin/platform directory
-* Soft link to: `junit.rb@ -> ../../../tools/junit-cli/junit.rb`
-* Copy the YML configurations to hybris/bin/platform, so that you can modify as you need. E.g. `cp ../../../tools/junit-cli/junit_cfg.yml.template junit_cfg.yml`
+* Create a soft link such that: `hybris/bin/platform/junit.rb@ -> path/to/hybris_junit/junit.rb`
+* Copy the YML configurations so that you can modify as you need. E.g. `cp path/to/hybris_junit/junit_cfg.yml hybris/bin/platform/junit_cfg.yml`
 * To use the tool, `hybris/bin/platform/junit.rb --help`
+
 ```
 Usage: junit [options]
 Hybris JUNIT CLI Runner v1.0.0
@@ -59,5 +60,6 @@ Thus
 * You can run unit tests on just MyCustomServiceImplTest and MyCustomFacadeImplTest, by invoking `hybris/bin/platform/junit.rb -p 0,2`.
 * You can run unit tests on just mycustomcore by invoking `hybris/bin/platform/junit.rb -u 0`
 * Unfortunately, tests stored in `web/testsrc` directories need to be run separately than the ones stored in `testsrc` directory. Hence to run unit tests on just mycustomwebservices and  mycustomstorefront, invoke `hybris/bin/platform/junit.rb -w 0,1`
+* The command line tool accepts array indices as a comma-separated list of integers. It does not have the ability to deal with ranges.
 
 
