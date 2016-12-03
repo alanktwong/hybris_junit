@@ -1,0 +1,11 @@
+all_extensions:
+- commercefacades
+- commerceservices
+webExtensions:
+- platformwebservices
+all_packages:
+- de.hybris.platform.commerceservices.product.impl.DefaultExportProductServiceTest
+- de.hybris.platform.commerceservices.product.impl.DefaultCommerceProductServiceTest
+verbose: false
+enabled: true
+
