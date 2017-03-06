@@ -11,7 +11,7 @@ require 'yaml'
 
 module HybrisJUnit
   # Defines the available configuration options for the configuration
-  ConfigurationStruct = Struct.new(:both, :unit, :web, :package, :required, :all, :test, :all_extensions, :all_packages, :verbose, :webExtensions, :enabled)
+  ConfigurationStruct = Struct.new(:both, :unit, :web, :package, :web_package, :required, :all, :test, :webby, :all_extensions, :all_packages, :web_packages, :verbose, :webExtensions, :enabled)
 
   class Configuration
     include Singleton
@@ -25,10 +25,13 @@ module HybrisJUnit
     @@config.unit = []
     @@config.web = []
     @@config.package = []
+    @@config.web_package = []
     @@config.all_extensions = {}
     @@config.all_packages = {}
+    @@config.web_packages = {}
     @@config.all = nil
     @@config.test = nil
+    @@config.webby = nil
     @@config.required = "vacuously-true"
     @@config.verbose = false
     @@config.enabled = true
@@ -101,6 +104,11 @@ module HybrisJUnit
       _selection = _packages.map { |b| self.all_packages[b] }.compact
     end
 
+    def self.select_web_packages(indices)
+      _packages = indices.map { |a| a.to_i }
+      _selection = _packages.map { |b| self.web_packages[b] }.compact
+    end
+
     def self.run_both!
       _selection = self.select_extensions(self.both)
       _selectionJoin = _selection.join(",")
@@ -153,6 +161,20 @@ module HybrisJUnit
       self.run_impl!("ant clean all unittests -Dtestclasses.packages=" + _selectionJoin)
     end
 
+    def self.run_web_packages!
+      _selection = []
+      if self.web_package.any?
+        _selection = self.select_web_packages(self.web_package)
+      else
+        _selection = self.web_packages
+      end
+      _selectionJoin = _selection.join(",")
+      if self.verbose
+        puts "should execute unit tests on all web packages: " + _selectionJoin
+      end
+      self.run_impl!("ant clean all unittests -Dtestclasses.web=true -Dtestclasses.packages=" + _selectionJoin)
+    end
+
     def self.run_impl!(_ant_options)
       if self.verbose
         puts _ant_options
@@ -172,6 +194,10 @@ module HybrisJUnit
         run_unit_packages!
       elsif self.all
         run_all!
+      elsif self.test
+        run_unit_packages!
+      elsif self.webby
+        run_web_packages!
       else
         if self.both.any? && self.all_extensions.any?
           run_both!
@@ -181,6 +207,8 @@ module HybrisJUnit
           run_unit_extensions!
         elsif self.package.any? && self.all_packages.any?
           run_unit_packages!
+        elsif self.web_package.any? && self.web_packages.any?
+          run_web_packages!
         else
           if self.verbose
             puts "Nothing to do"
@@ -221,6 +249,10 @@ module HybrisJUnit
           Configuration.package = setting
         end
 
+        parser.on("-q", "--web_package 0,1,...", Array, "Run unit tests on a list of web packages defined in junit_cfg.yml", "as an array under the property called web_packages.","Packages to run are selected by a 0-based index.") do |setting|
+          Configuration.web_package = setting
+        end
+
         parser.on("-v", "--[no-]verbose", "This boolean flag sets verbosity to either true or false.") do |setting|
           Configuration.verbose = setting
         end
@@ -229,14 +261,22 @@ module HybrisJUnit
           Configuration.enabled = setting
         end
 
-        parser.on("-t","--test", "Run all tests in all packages defined in junit_cfg.yml", "as an array under the property called all_packages") do |setting|
+        parser.on("--test", "Run all tests in all packages defined in junit_cfg.yml", "as an array under the property called all_packages") do |setting|
           Configuration.test = setting
           Configuration.all = false
+          Configuration.webby = false
         end
 
-        parser.on("-a","--all", "Run all tests in all extensions defined in junit_cfg.yml", "as an array under the property called all_extensions") do |setting|
+        parser.on("--webby", "Run all tests in all web_packages defined in junit_cfg.yml", "as an array under the property called web_packages") do |setting|
+          Configuration.webby = setting
+          Configuration.all = false
+          Configuration.test = false
+        end
+
+        parser.on("--all", "Run all tests in all extensions defined in junit_cfg.yml", "as an array under the property called all_extensions") do |setting|
           Configuration.all = setting
           Configuration.test = false
+          Configuration.webby = false
         end
 
         # parser.on("-r", "--required STR", "This command requires a string to be passed to it.") do |setting|
