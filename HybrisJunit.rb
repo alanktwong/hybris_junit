@@ -11,7 +11,7 @@ require 'yaml'
 
 module HybrisJUnit
   # Defines the available configuration options for the configuration
-  ConfigurationStruct = Struct.new(:both, :unit, :web, :package, :web_package, :required, :all, :test, :webby, :all_extensions, :all_packages, :web_packages, :verbose, :webExtensions, :enabled)
+  ConfigurationStruct = Struct.new(:both, :unit, :web, :package, :web_package, :required, :all, :test, :webby, :all_extensions, :all_packages, :web_packages, :verbose, :webExtensions, :enabled,  :cleanAll)
 
   class Configuration
     include Singleton
@@ -36,10 +36,19 @@ module HybrisJUnit
     @@config.verbose = false
     @@config.enabled = true
     @@config.webExtensions = []
+    @@config.cleanAll = false
 
     def self.config
       yield(@@config) if block_given?
       @@config
+    end
+
+    def self.ant_default
+      antCommand  = @@config.cleanAll ? "ant clean all" : "ant build"
+      if (self.verbose)
+        puts "Running - " + antCommand
+      end
+      antCommand
     end
 
     # Loads a YAML configuration file and sets each of the configuration values to
@@ -91,7 +100,7 @@ module HybrisJUnit
           puts "some of the selected extensions include web/testsrc"
         end
       end
-      self.run_impl!("ant clean all yunitinit alltests -Dtestclasses.extensions=" + _selectionJoin)
+      self.run_impl!(self.ant_default + " yunitinit alltests -Dtestclasses.extensions=" + _selectionJoin)
     end
 
     def self.select_extensions(indices)
@@ -118,7 +127,7 @@ module HybrisJUnit
           puts "some of the selected extensions include web/testsrc"
         end
       end
-      self.run_impl!("ant clean all yunitinit alltests -Dtestclasses.extensions=" + _selectionJoin)
+      self.run_impl!(self.ant_default + " yunitinit alltests -Dtestclasses.extensions=" + _selectionJoin)
     end
 
     def self.run_web_extensions!
@@ -132,7 +141,7 @@ module HybrisJUnit
       end
       _selection = self.webExtensions
       _webJoin = self.webExtensions.join(",")
-      self.run_impl!("ant clean all yunitinit alltests -Dtestclasses.web=true -Dtestclasses.extensions=" + _webJoin)
+      self.run_impl!(self.ant_default + " yunitinit alltests -Dtestclasses.web=true -Dtestclasses.extensions=" + _webJoin)
     end
 
     def self.run_unit_extensions!
@@ -144,7 +153,7 @@ module HybrisJUnit
           puts "some of the selected extensions include web/testsrc"
         end
       end
-      self.run_impl!("ant clean all unittests -Dtestclasses.extensions=" + _selectionJoin)
+      self.run_impl!(self.ant_default + " unittests -Dtestclasses.extensions=" + _selectionJoin)
     end
 
     def self.run_unit_packages!
@@ -158,7 +167,7 @@ module HybrisJUnit
       if self.verbose
         puts "should execute unit tests on package: " + _selectionJoin
       end
-      self.run_impl!("ant clean all unittests -Dtestclasses.packages=" + _selectionJoin)
+      self.run_impl!(self.ant_default + " unittests -Dtestclasses.packages=" + _selectionJoin)
     end
 
     def self.run_web_packages!
@@ -172,7 +181,7 @@ module HybrisJUnit
       if self.verbose
         puts "should execute unit tests on all web packages: " + _selectionJoin
       end
-      self.run_impl!("ant clean all unittests -Dtestclasses.web=true -Dtestclasses.packages=" + _selectionJoin)
+      self.run_impl!(self.ant_default + " unittests -Dtestclasses.web=true -Dtestclasses.packages=" + _selectionJoin)
     end
 
     def self.run_impl!(_ant_options)
@@ -211,7 +220,8 @@ module HybrisJUnit
           run_web_packages!
         else
           if self.verbose
-            puts "Nothing to do"
+            self.ant_default
+            puts "Nothing to do ... "
           end
         end
       end
@@ -259,6 +269,10 @@ module HybrisJUnit
 
         parser.on("--[no-]enabled", "This boolean flag enables whether ant is run") do |setting|
           Configuration.enabled = setting
+        end
+
+        parser.on("--[no-]clean", "This boolean flag  determines whether to run 'ant clean all' instead of 'ant build'") do |setting|
+          Configuration.cleanAll = setting
         end
 
         parser.on("--test", "Run all tests in all packages defined in junit_cfg.yml", "as an array under the property called all_packages") do |setting|
